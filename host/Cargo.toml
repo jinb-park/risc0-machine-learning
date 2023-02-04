@@ -1,9 +1,10 @@
 [package]
-name = "starter"
+name = "machine-learning"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-methods = { path = "../methods" }
+machine-learning-core = { path = "../core" }
+machine-learning-methods = { path = "../methods" }
 risc0-zkvm = "0.12"
 serde = "1.0"

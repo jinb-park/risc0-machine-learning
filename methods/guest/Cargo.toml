@@ -1,5 +1,5 @@
 [package]
-name = "methods-guest"
+name = "machine-learning-guest"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,4 +9,5 @@ edition = "2021"
 risc0-build = "0.12"
 
 [dependencies]
-risc0-zkvm = { version = "0.12", default-features = false }
+machine-learning-core = { path = "../../core" }
+risc0-zkvm = { version = "0.12", default-features = false, features = [ "std" ] }
