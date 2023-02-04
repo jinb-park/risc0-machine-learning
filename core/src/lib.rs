@@ -23,14 +23,13 @@ pub struct MnistModel {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MnistData {
     pub x: Vec<i32>, // (1, 40)
-    pub y: [[i32; 10]; 10]  // (10, 10) for test
 }
 
 fn relu(data: i32) -> i32 {
     if data < 0 {
-        return 0;
+        0
     } else {
-        return data;
+        data
     }
 }
 
@@ -42,8 +41,8 @@ pub fn inference(model: &MnistModel, x: &Vec<i32>) -> Result<usize, &'static str
         return Err("model-data length inconsistent");
     }
 
-    let w1_cols = model.w1.get(0).map(|v| { v.len() }).unwrap();
-    let w2_cols = model.w2.get(0).map(|v| { v.len() }).unwrap();
+    let w1_cols = model.w1.get(0).map(|v| v.len()).unwrap();
+    let w2_cols = model.w2.get(0).map(|v| v.len()).unwrap();
 
     for col in 0..w1_cols {
         let mut v: i32 = 0;
@@ -94,6 +93,6 @@ pub fn inference(model: &MnistModel, x: &Vec<i32>) -> Result<usize, &'static str
             idx = pos;
         }
     }
-    
-    return Ok(idx);
+
+    Ok(idx)
 }

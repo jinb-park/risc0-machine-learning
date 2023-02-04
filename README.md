@@ -1,38 +1,49 @@
-# RISC Zero Rust Starter Template
+# Machine learning
 
-Welcome to the RISC Zero Rust Starter Template! This template is intended to give you a starting point for building a project using the RISC Zero zkVM. Throughout the code are comments labelled `TODO` in places where we expect projects will need to modify the code.
+This example aims to run neural network inference on zkVM. In this example, what we want to keep secret is *a deep learning model* (precisely, how a model is organized is not secret, the weights inside are secret), and the prover feeds some input data and weights into zkVM and runs it.
+By running it in zkVM, the prover can convince the verifier that "when an input data X is given to a model M, its output will be Y" without revealing model parameters (or weights).
 
-TODO: Replace this README with a README for your project
-TODO: Verify whether the included `.gitignore`, `LICENSE`, and `rust-toolchain` files are appropriate to your project
+# Data and model
 
-## Quick Start
+What's used for input data is [the MNIST-1D dataset](https://github.com/greydanus/mnist1d) which is a tiny variation of the widely used MNIST data set. As the name suggests, this is one-dimensional data that represents a digit from 0 to 9 and forms a *(1,40)* matrix that is much smaller than that of the MNIST (*(28,28)* matrix). I've decided to go with it for its small size because a large data or model may not be functional on zkVM at this moment.
 
-First, make sure [rustup](https://rustup.rs) is installed. This project uses a [nightly](https://doc.rust-lang.org/book/appendix-07-nightly-rust.html) version of [Rust](https://doc.rust-lang.org/book/ch01-01-installation.html). The [`rust-toolchain`](rust-toolchain) file will be used by `cargo` to automatically install the correct version.
+And, the organization of the model used is as follows.
+```
+-- Input data:  (1, 40)
+-- Layer1:      (40, 16)  # matrix multiplication
+   -- Activation: Relu    # use Relu as activation function
+-- Layer2:      (16, 10)  # matrix multiplication
+-- Argmax:      (10)      # pick the final prediction
+```
 
-To build all methods and execute the method within the zkVM, run the following command:
+The model is pre-trained offline with 4000 data. `data/w1_1d_40_16.csv` and `data/w2_1d_16_10.csv` indicate pre-trained weights for Layer1 and Layer2 respectively.
+
+# Main program
+
+The main program that calls a method in the guest zkVM is [host/src/main.rs](host/src/main.rs). It first loads pre-trained weights and test data, and then it invokes `inference()` over two data in the host environment. The reason to call it in the host is to check the consistency between host and guest execution.
+
+```
+# prediction: prediction genereted by the given model and data
+# answer: correct answer
+[host] prediction: 9, answer: 2   # wrong prediction
+[host] prediction: 6, answer: 6   # correct prediction
+[host] success: 1
+```
+
+Afterward, it tries to invoke `inference()` over the same data but into the guest zkVM environment. The prover sends two pieces of data at once to the guest, to eliminate unnecessary communication overheads. And the guest returns the result of the prediction for each piece of data.
+
+```
+[guest] prediction: 9, answer: 2
+[guest] prediction: 6, answer: 6
+[guest] prove() time elapsed: 675.430503558s
+[guest] verify() time elapsed: 149.86107ms
+[guest] success: 1
+```
+
+You can see the result of the guest execution matches that of the host execution. Also, it prints out how much time `prove()` and `verify()` take respectively.
+
+# Run this example
 
 ```
 cargo run
 ```
-
-This is an empty template, and so there is no expected output (until you modify the code).
-
-## How to create a project based on this template
-
-Search this template for the string `TODO`, and make the necessary changes to implement the required feature described by the `TODO` comment. Some of these changes will be complex, and so we have a number of instructional resources to assist you in learning how to write your own code for the RISC Zero zkVM:
- * The [Getting Started section](https://www.risczero.com/docs) of the [RISC Zero website](https://www.risczero.com) is a great place to get started. There are additional explainers and overviews on our website as well.
- * Example projects are available in our [risc0/risc0-rust-examples repository](https://www.github.com/risc0/risc0-rust-examples).
- * Reference documentation for our Rust crates is available at [docs.rs], including the [RISC Zero zkVM crate](https://docs.rs/risc0-zkvm), the [RISC Zero zkVM guest crate](https://docs.rs/risc0-zkvm-guest), the [RISC Zero build crate](https://docs.rs/risc0-build), and others (the full list is available at [https://github.com/risc0/risc0/blob/main/README.md]).
- * Our [main repository](https://www.github.com/risc0/risc0).
-
-## Stable Versions
-By default, this template depends on the latest version of RISC Zero: the `main` branch of our [main repository](http://www.github.com/risc0). This gives you access to our latest features and improvements. If you would prefer to use our more stable published crates, we have tags matching those crates that you can use, e.g. `v0.11.1`.
-
-## Contributor's Guide
-We welcome contributions to documentation and code via PRs and GitHub Issues on our [main repository](http://www.github.com/risc0), this repository, or any of our other repositories.
-
-## Video Tutorial
-For a walk-through of how to build with this template, check out this [excerpt from our workshop at ZK HACK III](https://www.youtube.com/watch?v=Yg_BGqj_6lg&list=PLcPzhUaCxlCgig7ofeARMPwQ8vbuD6hC5&index=5).
-
-## Questions, Feedback, and Collaborations
-We'd love to hear from you on [Discord](https://discord.gg/risczero) or [Twitter](https://twitter.com/risczero).
