@@ -16,7 +16,7 @@ And, the organization of the model used is as follows.
 -- Argmax:      (10)      # pick the final prediction
 ```
 
-The model is pre-trained offline with 4000 data. `data/w1_1d_40_16.csv` and `data/w2_1d_16_10.csv` indicate pre-trained weights for Layer1 and Layer2 respectively.
+The model is pre-trained offline with 4000 data. `data/w1_1d_40_16.csv` and `data/w2_1d_16_10.csv` contain pre-trained weights for Layer1 and Layer2 respectively. The pre-training was built on top of TensorFlow and you can find that python script [here](https://github.com/jinb-park/MachineLearning/blob/master/deep-learning/mnist1d.py).
 
 # Main program
 
@@ -35,8 +35,8 @@ Afterward, it tries to invoke `inference()` over the same data but into the gues
 ```
 [guest] prediction: 9, answer: 2
 [guest] prediction: 6, answer: 6
-[guest] prove() time elapsed: 675.430503558s
-[guest] verify() time elapsed: 149.86107ms
+[guest] prove() time elapsed: 52.969092923s
+[guest] verify() time elapsed: 8.951361ms
 [guest] success: 1
 ```
 
@@ -45,5 +45,5 @@ You can see the result of the guest execution matches that of the host execution
 # Run this example
 
 ```
-cargo run
+cargo run --release
 ```

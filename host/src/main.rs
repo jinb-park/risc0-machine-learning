@@ -1,5 +1,5 @@
 use machine_learning_core::{inference, MnistData, MnistModel};
-use machine_learning_methods::{ML_INFERENCE_ID, ML_INFERENCE_PATH};
+use machine_learning_methods::{ML_INFERENCE_ELF, ML_INFERENCE_ID};
 use risc0_zkvm::serde::{from_slice, to_vec};
 use risc0_zkvm::Prover;
 use std::fs::File;
@@ -32,11 +32,7 @@ fn read_dim1_data(filename: &'static str) -> Vec<i32> {
 
 fn main() {
     // Make the prover.
-    let method_code = std::fs::read(ML_INFERENCE_PATH)
-        .expect("Method code should be present at the specified path; did you use the correct *_PATH constant?");
-    let mut prover = Prover::new(&method_code, ML_INFERENCE_ID).expect(
-        "Prover should be constructed from valid method source code and corresponding method ID",
-    );
+    let mut prover = Prover::new(ML_INFERENCE_ELF, ML_INFERENCE_ID).unwrap();
 
     // 1. read data and model
     let x_data = read_dim2_data("data/x_test.csv");
