@@ -22,14 +22,8 @@ pub struct MnistModel {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct MnistData {
-    pub x: Vec<Vec<i32>>, // multiple x data where each one is of (1, 40)
-}
-
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-pub struct MnistResult {
-    pub n: usize,          // how many predictions are in
-    pub pred: [usize; 16], // stores n predictions
-    pub res: i32,          // 0 only if everyting goes well
+    pub x: Vec<i32>, // (1, 40)
+    pub y: [[i32; 10]; 10]  // (10, 10) for test
 }
 
 fn relu(data: i32) -> i32 {
@@ -40,7 +34,7 @@ fn relu(data: i32) -> i32 {
     }
 }
 
-fn inference_data(model: &MnistModel, x: &Vec<i32>) -> Result<usize, &'static str> {
+pub fn inference(model: &MnistModel, x: &Vec<i32>) -> Result<usize, &'static str> {
     // w1: matrix multiplication
     let mut w1_v = Vec::new();
 
@@ -102,17 +96,4 @@ fn inference_data(model: &MnistModel, x: &Vec<i32>) -> Result<usize, &'static st
     }
     
     return Ok(idx);
-}
-
-pub fn inference(model: &MnistModel, data: &MnistData) -> Result<Vec<usize>, &'static str> {
-    let mut res = Vec::new();
-
-    for x in data.x.iter() {
-        match inference_data(model, x) {
-            Ok(p) => { res.push(p) },
-            Err(e) => { return Err(e) },
-        }
-    }
-
-    return Ok(res);
 }

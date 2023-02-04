@@ -4,34 +4,21 @@
 #![no_std]
 
 use risc0_zkvm::guest::env;
-use machine_learning_core::{MnistModel, MnistData, MnistResult, inference};
+use machine_learning_core::{MnistModel, MnistData, inference};
 
 risc0_zkvm::guest::entry!(main);
 
 pub fn main() {
-    let model: MnistModel = env::read();
+    //let model: MnistModel = env::read();
     let data: MnistData = env::read();
 
-    let mut res: MnistResult = MnistResult {
-        n: data.x.len(),
-        pred: [0 as usize; 16],
-        res: 0,
-    };
-
-    match inference(&model, &data) {
-        Ok(pred_vec) => {
-            for (pos, p) in pred_vec.iter().enumerate() {
-                if pos >= 16 {
-                    res.res = -1;
-                    break;
-                }
-                res.pred[pos] = *p;
-            }
-        },
-        Err(_) => {
-            res.res = -1;
-        },
-    }
+    let mut res: i32 = -1;
+    /*
+    match inference(&model, &data.x) {
+        Ok(pred) => { res = pred as i32; }
+        Err(_) => {},
+    } */
     
+    res = data.y[0][1];
     env::commit(&res);
 }

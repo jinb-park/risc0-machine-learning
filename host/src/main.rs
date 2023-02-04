@@ -4,9 +4,9 @@ use risc0_zkvm::Prover;
 // use risc0_zkvm::serde::{from_slice, to_vec};
 use std::fs::File;
 use std::io::{BufReader, BufRead};
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use risc0_zkvm::serde::{from_slice, to_vec};
-use machine_learning_core::{MnistModel, MnistData, MnistResult, inference};
+use machine_learning_core::{MnistModel, MnistData, inference};
 
 fn read_dim2_data(filename: &'static str) -> Vec<Vec<i32>> {
     let file = File::open(filename).expect("shold be able to read file");
@@ -43,8 +43,6 @@ fn main() {
         "Prover should be constructed from valid method source code and corresponding method ID",
     );
 
-    // TODO: Implement communication with the guest here
-
     // 1. read data and model
     let x_data = read_dim2_data("x_test.csv");
     let y_data = read_dim1_data("y_test.csv");
@@ -57,23 +55,25 @@ fn main() {
         w2: w2_data,
     };
     let data = MnistData {
-        x: x_data.to_vec(),
+        x: x_data[0].to_vec(),
+        y: [[1 as i32; 10]; 10],
     };
 
     // 3. simulate inference on host
     let mut success = 0;
-    let res = inference(&model, &data);
-    match res {
-        Ok(pred) => {
-            for (p, a) in pred.iter().zip(y_data.iter()) {
-                if (*p as i32) == *a {
-                    success += 1;
+    for (pos, d) in x_data.iter().enumerate() {
+        match inference(&model, d) {
+            Ok(pred) => {
+                if let Some(answer) = y_data.get(pos) {
+                    if (pred as i32) == *answer {
+                        success += 1;
+                    }
+                    println!("[host] prediction: {}, answer: {}", pred, *answer);
                 }
-                println!("[host] prediction: {}, answer: {}", *p, *a);
+            },
+            Err(e) => {
+                println!("[host] error: {}", e);
             }
-        },
-        Err(e) => {
-            println!("[host] error: {}", e);
         }
     }
     println!("[host] success: {}", success);
@@ -81,24 +81,18 @@ fn main() {
     // 4. run inference on guest
     success = 0;
     let mut start = Instant::now();
-    prover.add_input_u32_slice(&to_vec(&model).unwrap());
+    //prover.add_input_u32_slice(&to_vec(&model).unwrap());
     prover.add_input_u32_slice(&to_vec(&data).unwrap());
 
     let receipt = prover.run().expect("code should be provable");
 
-    let guest_res: MnistResult = from_slice(&receipt.journal).expect(
+    let pred: i32 = from_slice(&receipt.journal).expect(
         "Journal output should deserialize into the same types (& order) that it was written",
     );
-    if guest_res.res == 0 {
-        for (pos, a) in y_data.iter().enumerate() {
-            if (pos < guest_res.pred.len()) && ((guest_res.pred[pos] as i32) == *a) {
-                success += 1;
-            }
-            println!("[guest] prediction: {}, answer: {}", guest_res.pred[pos], *a);
-        }
-    } else {
-        println!("[guest] error");
+    if pred == y_data[0] {
+        success += 1;
     }
+    println!("[guest] prediction: {}, answer: {}", pred, y_data[0]);
     println!("[guest] prove() time elapsed: {:?}", start.elapsed());
 
     // verify()
